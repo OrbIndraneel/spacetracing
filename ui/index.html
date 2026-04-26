@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Single-Object Asteroid Tracer — Interactive Research Pipeline Dashboard by Indraneel Mandal" />
+  <title>Asteroid Tracer | Research Pipeline Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       STAR FIELD CANVAS (full-screen background)
+  ═══════════════════════════════════════════════════════════ -->
+  <canvas id="starfield"></canvas>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       NAV BAR
+  ═══════════════════════════════════════════════════════════ -->
+  <nav id="navbar">
+    <div class="nav-brand">
+      <span class="nav-icon">☄</span>
+      <span>AsteroidTracer</span>
+    </div>
+    <div class="nav-links">
+      <a href="#pipeline">Pipeline</a>
+      <a href="#results">Results</a>
+      <a href="#visual-result">Figure</a>
+      <a href="#explorer">Explorer</a>
+      <a href="#paper">Paper</a>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO SECTION
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="hero">
+    <div class="hero-content reveal">
+      <div class="hero-badge">IEEE Research Paper · 2026</div>
+      <h1 class="hero-title">
+        Single-Object<br>
+        <span class="gradient-text">Asteroid Tracer</span>
+      </h1>
+      <p class="hero-sub">
+        A lightweight pipeline that detects and traces moving objects in FITS astronomical 
+        time-series using ZScale normalization, frame differencing, greedy track linking, 
+        and motion-based scoring.
+      </p>
+      <div class="hero-chips">
+        <span class="chip">~4000 FITS Frames</span>
+        <span class="chip">18 Frames Tracked</span>
+        <span class="chip">96.1 px Displacement</span>
+        <span class="chip">9.7 px/frame Speed</span>
+      </div>
+      <div class="hero-actions reveal">
+        <a href="#pipeline" id="explore-btn" class="cta-btn">
+          <span>Explore Pipeline</span>
+          <span class="cta-arrow">↓</span>
+        </a>
+        <button id="run-pipeline-btn" class="cta-btn secondary">
+          <span>▶ Run Analysis</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Terminal Output -->
+    <div id="terminal-container" class="reveal">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <div class="terminal-title">asteroid_tracer_console</div>
+        <div class="terminal-actions">
+          <button id="clear-terminal">Clear</button>
+        </div>
+      </div>
+      <div id="terminal-output" class="terminal-body">
+        <div class="line muted">Ready to initialize research pipeline...</div>
+      </div>
+    </div>
+
+    <!-- Animated orbit rings -->
+    <div class="orbit-ring orbit-1"></div>
+    <div class="orbit-ring orbit-2"></div>
+    <div class="orbit-ring orbit-3"></div>
+    <div class="hero-planet"></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PIPELINE STAGES
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="pipeline">
+    <div class="section-header reveal">
+      <div class="section-label">Step-by-Step</div>
+      <h2>Detection Pipeline</h2>
+      <p class="section-desc">Five stages transform raw FITS frames into a confirmed moving-object trajectory.</p>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="pipeline-progress reveal">
+      <div class="pp-dot active" data-stage="1">1</div>
+      <div class="pp-line"></div>
+      <div class="pp-dot" data-stage="2">2</div>
+      <div class="pp-line"></div>
+      <div class="pp-dot" data-stage="3">3</div>
+      <div class="pp-line"></div>
+      <div class="pp-dot" data-stage="4">4</div>
+      <div class="pp-line"></div>
+      <div class="pp-dot" data-stage="5">5</div>
+    </div>
+
+    <!-- Carousel Wrapper -->
+    <div class="pipeline-carousel-container reveal">
+      <button class="carousel-nav prev" id="prev-stage">←</button>
+      
+      <div class="stages-slider-wrap">
+        <div class="stages-grid" id="stages-slider">
+
+      <!-- Stage 1 -->
+      <div class="stage-card reveal" data-stage="1">
+        <div class="stage-number">01</div>
+        <div class="stage-icon">🔭</div>
+        <h3 class="stage-title">FITS Image Loading</h3>
+        <p class="stage-desc">Scans the dataset folder for <code>.fits</code> / <code>.fit</code> files, opens them with <strong>Astropy</strong>, extracts the primary HDU image array, and handles multi-dimensional data by flattening to 2D.</p>
+        <div class="stage-visual" id="sv1">
+          <div class="fits-stack">
+            <div class="fits-frame f1"><span>frame_001.fits</span></div>
+            <div class="fits-frame f2"><span>frame_002.fits</span></div>
+            <div class="fits-frame f3"><span>frame_003.fits</span></div>
+            <div class="fits-frame f4"><span>…</span></div>
+          </div>
+          <div class="fits-counter">
+            <span class="fc-label">Loaded</span>
+            <span class="fc-num" id="fits-count">0</span>
+            <span class="fc-label">/ ~4000 frames</span>
+          </div>
+        </div>
+        <div class="stage-params">
+          <div class="param-tag">Input: FITS folder</div>
+          <div class="param-tag">Output: image array list</div>
+          <div class="param-tag">Library: Astropy</div>
+        </div>
+      </div>
+
+      <!-- Stage 2 -->
+      <div class="stage-card reveal" data-stage="2">
+        <div class="stage-number">02</div>
+        <div class="stage-icon">⚡</div>
+        <h3 class="stage-title">ZScale Normalization</h3>
+        <p class="stage-desc">Each frame is normalized using <strong>ZScale limits</strong> (vmin, vmax) to robustly clip pixel intensity, then linearly mapped to 8-bit [0–255]. A 5×5 Gaussian blur reduces high-frequency noise before differencing.</p>
+        <div class="stage-visual" id="sv2">
+          <div class="zscale-demo">
+            <div class="zs-before">
+              <div class="zs-label">Raw FITS</div>
+              <canvas id="raw-canvas" width="140" height="110"></canvas>
+            </div>
+            <div class="zs-arrow">→</div>
+            <div class="zs-after">
+              <div class="zs-label">ZScale + 8-bit</div>
+              <canvas id="norm-canvas" width="140" height="110"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="stage-params">
+          <div class="param-tag">ZScaleInterval (Astropy)</div>
+          <div class="param-tag">GaussianBlur 5×5</div>
+          <div class="param-tag">Output: uint8 [0–255]</div>
+        </div>
+      </div>
+
+      <!-- Stage 3 -->
+      <div class="stage-card reveal" data-stage="3">
+        <div class="stage-number">03</div>
+        <div class="stage-icon">🌊</div>
+        <h3 class="stage-title">Motion Segmentation</h3>
+        <p class="stage-desc">Consecutive frame pairs are subtracted via <strong>absolute differencing</strong>. Morphological opening removes single-pixel noise. A binary threshold τ produces a motion mask — only pixels that changed are lit.</p>
+        <div class="stage-visual" id="sv3">
+          <div class="motion-demo">
+            <canvas id="motion-canvas" width="280" height="120"></canvas>
+          </div>
+          <div class="slider-row">
+            <label>Threshold τ: <span id="tau-val">20</span></label>
+            <input type="range" id="tau-slider" min="5" max="50" value="20" />
+          </div>
+        </div>
+        <div class="stage-params">
+          <div class="param-tag">cv2.absdiff</div>
+          <div class="param-tag">τ = 20 (default)</div>
+          <div class="param-tag">MORPH_OPEN 3×3</div>
+        </div>
+      </div>
+
+      <!-- Stage 4 -->
+      <div class="stage-card reveal" data-stage="4">
+        <div class="stage-number">04</div>
+        <div class="stage-icon">🔗</div>
+        <h3 class="stage-title">Blob Detection + Track Linking</h3>
+        <p class="stage-desc">OpenCV's <strong>SimpleBlobDetector</strong> extracts blob centroids from the motion mask (area 4–500 px²). A greedy nearest-neighbor linker connects blobs across frames within <code>MAX_LINK_DIST</code> pixels.</p>
+        <div class="stage-visual" id="sv4">
+          <canvas id="track-canvas" width="280" height="140"></canvas>
+        </div>
+        <div class="slider-row">
+          <label>MAX_LINK_DIST: <span id="mld-val">15</span> px</label>
+          <input type="range" id="mld-slider" min="5" max="40" value="15" />
+        </div>
+        <div class="stage-params">
+          <div class="param-tag">Area: 4–500 px²</div>
+          <div class="param-tag">MAX_LINK_DIST = 15 px</div>
+          <div class="param-tag">Greedy NN linking</div>
+        </div>
+      </div>
+
+      <!-- Stage 5 -->
+      <div class="stage-card reveal" data-stage="5">
+        <div class="stage-number">05</div>
+        <div class="stage-icon">🏆</div>
+        <h3 class="stage-title">Scoring & Best Track Selection</h3>
+        <p class="stage-desc">Each track is scored by <strong>Displacement × Straightness × Continuity bonus × Speed bonus</strong>. Tracks shorter than 4 frames or with &lt; 8 px net displacement are rejected. The highest-scoring track is selected.</p>
+        <div class="stage-visual" id="sv5">
+          <div class="score-bars">
+            <div class="sb-row">
+              <span class="sb-label">Track A</span>
+              <div class="sb-bar-wrap"><div class="sb-bar" style="width:95%" data-score="2847.3"><span>2847.3</span></div></div>
+              <span class="sb-badge best">BEST ★</span>
+            </div>
+            <div class="sb-row">
+              <span class="sb-label">Track B</span>
+              <div class="sb-bar-wrap"><div class="sb-bar b2" style="width:38%"><span>1092.1</span></div></div>
+            </div>
+            <div class="sb-row">
+              <span class="sb-label">Track C</span>
+              <div class="sb-bar-wrap"><div class="sb-bar b3" style="width:22%"><span>634.7</span></div></div>
+            </div>
+            <div class="sb-row">
+              <span class="sb-label">Track D</span>
+              <div class="sb-bar-wrap"><div class="sb-bar b4" style="width:11%"><span>312.0</span></div></div>
+            </div>
+            <div class="sb-row">
+              <span class="sb-label">Track E</span>
+              <div class="sb-bar-wrap"><div class="sb-bar b5" style="width:5%"><span>141.5</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="stage-params">
+          <div class="param-tag">MIN_TRACK_LEN = 4</div>
+          <div class="param-tag">MIN_DISP = 8 px</div>
+          <div class="param-tag">Score: D × S × Cb × Sb</div>
+        </div>
+      </div>
+
+        </div><!-- /stages-slider -->
+      </div><!-- /stages-slider-wrap -->
+
+      <button class="carousel-nav next" id="next-stage">→</button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       RESULTS DASHBOARD
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="results">
+    <div class="section-header reveal">
+      <div class="section-label">Quantitative Output</div>
+      <h2>Results Dashboard</h2>
+      <p class="section-desc">Key metrics measured on ~4000 FITS frames from the WISE survey dataset.</p>
+    </div>
+
+    <div class="metrics-grid reveal">
+      <div class="metric-card mc-primary">
+        <div class="metric-icon">🖼</div>
+        <div class="metric-val counter" data-target="4000">0</div>
+        <div class="metric-label">FITS Frames Loaded</div>
+        <div class="metric-sub">N — total observations</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">↔</div>
+        <div class="metric-val counter" data-target="18">0</div>
+        <div class="metric-label">Frames Tracked</div>
+        <div class="metric-sub">Best track span</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📏</div>
+        <div class="metric-val">96.1<span class="metric-unit">px</span></div>
+        <div class="metric-label">Net Displacement</div>
+        <div class="metric-sub">Start → End distance</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">💨</div>
+        <div class="metric-val">9.7<span class="metric-unit">px/f</span></div>
+        <div class="metric-label">Average Speed</div>
+        <div class="metric-sub">Pixels per frame</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📐</div>
+        <div class="metric-val">0.58</div>
+        <div class="metric-label">Straightness</div>
+        <div class="metric-sub">D / Path (0–1)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📏</div>
+        <div class="metric-val">165.2<span class="metric-unit">px</span></div>
+        <div class="metric-label">Total Path Length</div>
+        <div class="metric-sub">Sum of all steps</div>
+      </div>
+
+      <!-- Wide performance card -->
+      <div class="metric-card mc-wide">
+        <div class="perf-table">
+          <div class="perf-row header">
+            <span>Metric</span><span>Value</span><span>Status</span>
+          </div>
+          <div class="perf-row">
+            <span>Valid transitions (K)</span><span id="pK">Computing...</span><span class="status-dot ok"></span>
+          </div>
+          <div class="perf-row">
+            <span>Seq. boundaries (B)</span><span id="pB">Computing...</span><span class="status-dot ok"></span>
+          </div>
+          <div class="perf-row">
+            <span>Mean blobs / transition</span><span>~2.1</span><span class="status-dot ok"></span>
+          </div>
+          <div class="perf-row">
+            <span>Candidate tracks (T)</span><span>~148</span><span class="status-dot ok"></span>
+          </div>
+          <div class="perf-row">
+            <span>Tracks ≥ MIN_TRACK_LENGTH</span><span>~23</span><span class="status-dot ok"></span>
+          </div>
+          <div class="perf-row">
+            <span>Tracks ≥ MIN_DISPLACEMENT</span><span>~11</span><span class="status-dot ok"></span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       VISUAL ANALYSIS RESULT (FIGURE)
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="visual-result">
+    <div class="section-header reveal">
+      <div class="section-label">Graphical Output</div>
+      <h2>Analysis Visual Result</h2>
+      <p class="section-desc">The high-fidelity research plot generated by the asteroid detection pipeline, showing the traced path on the FITS background.</p>
+    </div>
+
+    <div class="figure-container reveal">
+      <div id="track-visual-wrap">
+        <canvas id="main-track-canvas" width="800" height="600"></canvas>
+        <img id="latest-result-plot" src="" alt="Latest Result Plot" style="display: none; width: 100%; border-radius: 12px; box-shadow: 0 0 50px rgba(0,255,204,0.15);">
+      </div>
+      
+      <div class="figure-caption">
+        <strong>Figure 1:</strong> Captured asteroid trajectory colored by time sequence. The glowing trail indicates the object's path across 18 tracked frames.
+      </div>
+    </div>
+  </section>
+
+  <section id="track" style="display: none;">
+    <!-- Original Track section hidden or removed as its content moved to Visual Result -->
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ALGORITHM EXPLORER
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="explorer">
+    <div class="section-header reveal">
+      <div class="section-label">Live Interaction</div>
+      <h2>Algorithm Score Explorer</h2>
+      <p class="section-desc">Adjust parameters to see how the scoring function evaluates a candidate track in real time.</p>
+    </div>
+
+    <div class="explorer-grid reveal">
+      <!-- Formula Card -->
+      <div class="formula-card">
+        <h3>Scoring Formula</h3>
+        <div class="formula-block">
+          <div class="formula-line">Score = D × S × (1 + 0.1·L) × (1 + 0.05·V)</div>
+          <div class="formula-vars">
+            <span><strong>D</strong> = Net displacement (px)</span>
+            <span><strong>S</strong> = Straightness = D / Path</span>
+            <span><strong>L</strong> = Track length (frames)</span>
+            <span><strong>V</strong> = Avg speed (px/frame)</span>
+          </div>
+        </div>
+
+        <div class="algo-sliders">
+          <div class="asl-row">
+            <label>Displacement (D): <span id="sl-D">96</span> px</label>
+            <input type="range" id="sl-disp" min="0" max="300" value="96" />
+          </div>
+          <div class="asl-row">
+            <label>Path Length: <span id="sl-P">165</span> px</label>
+            <input type="range" id="sl-path" min="1" max="500" value="165" />
+          </div>
+          <div class="asl-row">
+            <label>Track Length (L): <span id="sl-L">18</span> frames</label>
+            <input type="range" id="sl-len" min="2" max="50" value="18" />
+          </div>
+        </div>
+
+        <div class="score-output">
+          <div class="so-label">Computed Score</div>
+          <div class="so-value" id="live-score">—</div>
+          <div class="so-bar-wrap"><div class="so-bar" id="score-bar"></div></div>
+          <div class="so-verdict" id="score-verdict"></div>
+        </div>
+      </div>
+
+      <!-- Pseudocode Card -->
+      <div class="pseudocode-card">
+        <h3>Algorithm Pseudocode</h3>
+        <div class="pseudo-block">
+          <div class="pseudo-comment"># Single-Object Asteroid Tracing Pipeline</div>
+          <div class="pseudo-kw">Input:</div>   FITS frames {I_t}
+          <div class="pseudo-kw">Output:</div>  Best track T*
+          <br>
+          <div class="pseudo-step active-step" id="ps1"><span class="ps-num">1:</span> Load frames; detect shape-mismatch boundaries</div>
+          <div class="pseudo-step" id="ps2"><span class="ps-num">2:</span> For each valid pair (I_t, I_{t+1}):</div>
+          <div class="pseudo-step" id="ps3"><span class="ps-num">3:</span> &nbsp;&nbsp;I8_t ← ZScaleNorm + GaussianBlur(I_t)</div>
+          <div class="pseudo-step" id="ps4"><span class="ps-num">4:</span> &nbsp;&nbsp;M_t ← Threshold(Open(|I8_t − I8_{t+1}|))</div>
+          <div class="pseudo-step" id="ps5"><span class="ps-num">5:</span> &nbsp;&nbsp;B_t ← BlobDetect(M_t, area=[4,500])</div>
+          <div class="pseudo-step" id="ps6"><span class="ps-num">6:</span> Build tracks via greedy NN linking (MAX_LINK_DIST)</div>
+          <div class="pseudo-step" id="ps7"><span class="ps-num">7:</span> Filter: length ≥ 4 AND displacement ≥ 8 px</div>
+          <div class="pseudo-step" id="ps8"><span class="ps-num">8:</span> Score: D × S × (1+0.1·L) × (1+0.05·V)</div>
+          <div class="pseudo-step" id="ps9"><span class="ps-num">9:</span> Return highest-scoring track T*</div>
+          <br>
+          <div class="pseudo-comment"># Complexity: O(A_t · B_t) per transition</div>
+        </div>
+        <button id="anim-steps-btn" class="btn-secondary">▶ Animate Steps</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PARAMETER SENSITIVITY TABLE
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="sensitivity">
+    <div class="section-header reveal">
+      <div class="section-label">Ablation Study</div>
+      <h2>Parameter Sensitivity</h2>
+      <p class="section-desc">How threshold τ and MAX_LINK_DIST affect track count and quality (Table III from the paper).</p>
+    </div>
+
+    <div class="sensitivity-container reveal">
+      <table class="sens-table" id="sens-table">
+        <thead>
+          <tr>
+            <th>τ (Threshold)</th>
+            <th>MAX_LINK_DIST</th>
+            <th>#Tracks</th>
+            <th>Best Track Length</th>
+            <th>Observation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="sens-row" data-idx="0">
+            <td><span class="val-badge">15</span></td>
+            <td><span class="val-badge">10 px</span></td>
+            <td>~210</td>
+            <td>12 frames</td>
+            <td><span class="obs-tag obs-warn">More blobs; higher noise risk</span></td>
+          </tr>
+          <tr class="sens-row default-row" data-idx="1">
+            <td><span class="val-badge default-badge">20 ★</span></td>
+            <td><span class="val-badge default-badge">15 px ★</span></td>
+            <td>~148</td>
+            <td>18 frames</td>
+            <td><span class="obs-tag obs-ok">Default — balanced performance</span></td>
+          </tr>
+          <tr class="sens-row" data-idx="2">
+            <td><span class="val-badge">30</span></td>
+            <td><span class="val-badge">20 px</span></td>
+            <td>~87</td>
+            <td>14 frames</td>
+            <td><span class="obs-tag obs-warn">Fewer blobs; may miss dim objects</span></td>
+          </tr>
+          <tr class="sens-row" data-idx="3">
+            <td><span class="val-badge">20</span></td>
+            <td><span class="val-badge">5 px</span></td>
+            <td>~320</td>
+            <td>8 frames</td>
+            <td><span class="obs-tag obs-bad">Under-linking; many short fragments</span></td>
+          </tr>
+          <tr class="sens-row" data-idx="4">
+            <td><span class="val-badge">20</span></td>
+            <td><span class="val-badge">30 px</span></td>
+            <td>~104</td>
+            <td>21 frames</td>
+            <td><span class="obs-tag obs-warn">Over-linking; wrong associations possible</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PAPER ABSTRACT / CITATION
+  ═══════════════════════════════════════════════════════════ -->
+  <section id="paper">
+    <div class="section-header reveal">
+      <div class="section-label">Published Research</div>
+      <h2>Paper Reference</h2>
+    </div>
+
+    <div class="paper-grid reveal">
+      <div class="paper-abstract-card">
+        <div class="pac-label">Abstract</div>
+        <blockquote class="pac-text">
+          Detecting and tracing small moving objects in astronomical time-series is challenging due to low signal-to-noise ratio, background star fields, and acquisition discontinuities across sequences. This paper presents a lightweight single-object asteroid tracing pipeline for FITS time-series that combines ZScale-based intensity normalization, frame differencing for motion segmentation, blob extraction using area-constrained detection, and greedy multi-frame association for track formation. Candidate tracks are filtered and ranked using a motion-focused scoring function that favors sufficient displacement, linearity (straightness), and temporal continuity. Experiments were conducted on approximately 4000 FITS frames containing multiple sequences, where frame-size changes are treated as sequence boundaries to avoid invalid differencing. The system outputs an interpretable trajectory overlay and quantitative motion statistics (path length, displacement, and average pixel speed). In a representative run, the selected object was tracked for 18 frames with 96.1 px net displacement and 9.7 px/frame average speed. The results suggest that combining simple difference imaging with heuristic track scoring can produce stable tracklets under noisy backgrounds while remaining computationally inexpensive compared to heavier tracking frameworks.
+        </blockquote>
+        <div class="pac-terms">
+          <strong>Index Terms:</strong> Asteroid tracking · FITS · difference imaging · blob detection · tracklet generation · greedy data association · astronomical image processing · OpenCV · Astropy
+        </div>
+      </div>
+
+      <div class="paper-meta-card">
+        <div class="pm-title">Single-Object Asteroid Tracing in FITS Time-Series Using ZScale Normalization, Frame Differencing, and Greedy Track Linking</div>
+        <div class="pm-author">Indraneel Mandal</div>
+        <div class="pm-affil">B.Tech CSE (AI &amp; DS) · ITM (SLS) Baroda University, Vadodara</div>
+        <div class="pm-divider"></div>
+        <div class="pm-stack">
+          <div class="pm-tech">Python</div>
+          <div class="pm-tech">Astropy</div>
+          <div class="pm-tech">OpenCV</div>
+          <div class="pm-tech">NumPy</div>
+          <div class="pm-tech">Matplotlib</div>
+          <div class="pm-tech">FITS</div>
+        </div>
+        <div class="pm-refs">
+          <div class="pm-ref-title">Key References</div>
+          <div class="pm-ref">[1] Greisen &amp; Calabretta, A&amp;A, 395(3), 2002 — FITS WCS</div>
+          <div class="pm-ref">[2] Astropy Collaboration, A&amp;A, A33, 2013 — Astropy</div>
+          <div class="pm-ref">[3] G. Bradski, Dr. Dobb's Journal, 2000 — OpenCV</div>
+          <div class="pm-ref">[4] J. D. Hunter, CiSE, vol.9 no.3, 2007 — Matplotlib</div>
+          <div class="pm-ref">[5] Harris et al., Nature, 585, 2020 — NumPy</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════════════════════ -->
+  <footer id="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">☄ AsteroidTracer</div>
+      <div class="footer-tagline">Single-Object FITS Pipeline · Indraneel Mandal · 2026</div>
+      <div class="footer-tech">Built with Python · Astropy · OpenCV · Matplotlib</div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
